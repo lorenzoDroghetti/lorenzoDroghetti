@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lupus in Tabula</title>
+</head>
+<body>
+    
+    <h1>Lupus in Tabula</h1>
+
+        <p>Il gioco del Lupus in Tabula è un gioco di società che simula un villaggio medievale in cui alcuni abitanti sono lupi mannari e
+            dev
+            ono essere smascherati dagli altri abitanti del villaggio. Il gioco è diviso in due fasi: una notturna e una diurna. Durante la
+            fase notturna i lupi mannari si svegliano e decidono chi eliminare, mentre durante la fase diurna gli abitanti del villaggio    
+            discutono e votano chi eliminare. Il gioco termina quando tutti i lupi mannari sono stati eliminati o quando il numero di lupi
+            mannari è uguale al numero di abitanti del villaggio.</p>
+
+
+    <h2>Regole del gioco</h2>
+
+        <ul>
+            <li>Il gioco è diviso in due fasi: una notturna e una diurna.</li>
+            <li>Durante la fase notturna i lupi mannari si svegliano e decidono chi eliminare.</li>
+            <li>Durante la fase diurna gli abitanti del villaggio discutono e votano chi eliminare.</li>
+            <li>Il gioco termina quando tutti i lupi mannari sono stati eliminati o quando il numero di lupi mannari è uguale al numero di
+                abitanti del villaggio.</li>
+        </ul>
+
+
+    <h2>Personaggi</h2>
+
+        <ul>
+            <li>Lupo mannaro: deve eliminare gli abitanti del villaggio.</li>
+            <li>Contadino: deve eliminare i lupi mannari.</li>
+            <li>Veggente: può indovinare il ruolo di un giocatore.</li>
+            <li>Guardia: può proteggere un giocatore dalla morte.</li>
+            <li>2 Massoni: contadini che sanno vicendevolmente la loro innocenza</li>
+            <li>Lupetto: se ucciso dai lupi si trasforma in uno di loro</li>
+            <li>Gufo: può votare chiunque preferisca durante la notte</li>
+        </ul>
+        
+
+
+    <h2>Varianti</h2>
+
+        <ul>
+            <li>Lupo solitario: il lupo mannaro gioca da solo contro tutti gli altri giocatori.</li>
+            <li>Numero di lupi mannari: il numero di lupi mannari può variare a seconda del numero di giocatori.</li>
+            <li>Personaggi speciali: possono essere aggiunti nuovi personaggi con abilità speciali.</li>
+        </ul>
+
+    
+    
+    <button id="playButton">Gioca</button>
+    
+    <div id="playerInput" style="display:none;">
+        <label for="numPlayers">Numero di giocatori:</label>
+        <input type="number" id="numPlayers" min="8" max="15">
+        <button id="addPlayersButton">Aggiungi giocatori</button>
+    </div>
+    
+    <div id="playerNames" style="display:none;">
+        <h2>Inserisci i nomi dei giocatori</h2>
+        <div id="namesList"></div>
+        <button id="assignRolesButton">Assegna ruoli</button>
+    </div>
+    
+    <div id="assignedRoles" style="display:none;">
+        <h2>Ruoli assegnati</h2>
+        <div id="currentPlayer"></div>
+        <button id="revealRoleButton">Svela ruolo</button>
+        <button id="nextPlayerButton" style="display:none;">Prossimo giocatore</button>
+    </div>
+    
+    <script>
+        document.getElementById('playButton').addEventListener('click', function() {
+            document.getElementById('playerInput').style.display = 'block';
+        });
+
+        document.getElementById('addPlayersButton').addEventListener('click', function() {
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            if (numPlayers < 8 || numPlayers > 15) {
+                alert('Il numero di giocatori deve essere compreso tra 8 e 15.');
+                return;
+            }
+
+            const namesList = document.getElementById('namesList');
+            namesList.innerHTML = '';
+            for (let i = 0; i < numPlayers; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = `Nome giocatore ${i + 1}`;
+                input.id = `playerName${i}`;
+                namesList.appendChild(input);
+                namesList.appendChild(document.createElement('br'));
+            }
+            document.getElementById('playerNames').style.display = 'block';
+        });
+
+        document.getElementById('assignRolesButton').addEventListener('click', function() {
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            const roles = [];
+            const numWerewolves = Math.floor(numPlayers / 3);
+            const numVillagers = numPlayers - numWerewolves - 3; // 3 special roles
+
+            for (let i = 0; i < numWerewolves; i++) {
+                roles.push('Lupo mannaro');
+            }
+            for (let i = 0; i < numVillagers; i++) {
+                roles.push('Contadino');
+            }
+            roles.push('Veggente', 'Gufo', 'Guardia');
+
+            const players = [];
+            for (let i = 0; i < numPlayers; i++) {
+                const playerName = document.getElementById(`playerName${i}`).value;
+                players.push({ name: playerName, role: roles.splice(Math.floor(Math.random() * roles.length), 1)[0] });
+            }
+
+            let currentPlayerIndex = 0;
+            const currentPlayerDiv = document.getElementById('currentPlayer');
+            const revealRoleButton = document.getElementById('revealRoleButton');
+            const nextPlayerButton = document.getElementById('nextPlayerButton');
+
+            function showNextPlayer() {
+                if (currentPlayerIndex < players.length) {
+                    currentPlayerDiv.textContent = `Giocatore: ${players[currentPlayerIndex].name}`;
+                    revealRoleButton.style.display = 'block';
+                    nextPlayerButton.style.display = 'none';
+                } else {
+                    currentPlayerDiv.textContent = 'Tutti i ruoli sono stati svelati.';
+                    revealRoleButton.style.display = 'none';
+                    nextPlayerButton.style.display = 'none';
+                }
+            }
+
+            revealRoleButton.addEventListener('click', function() {
+                currentPlayerDiv.textContent += ` - Ruolo: ${players[currentPlayerIndex].role}`;
+                revealRoleButton.style.display = 'none';
+                nextPlayerButton.style.display = 'block';
+            });
+
+            nextPlayerButton.addEventListener('click', function() {
+                currentPlayerIndex++;
+                showNextPlayer();
+            });
+
+            document.getElementById('assignedRoles').style.display = 'block';
+            showNextPlayer();
+        });
+    </script>
+</body>
+</html>
