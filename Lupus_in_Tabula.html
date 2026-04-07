@@ -1,154 +1,1201 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lupus in Tabula</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lupus in Tabula — Local Party App</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #161a22;
+      --panel-2: #1c2230;
+      --text: #eef2ff;
+      --muted: #a6b0c3;
+      --line: rgba(255,255,255,0.08);
+      --accent: #7c3aed;
+      --accent-2: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --good: #22c55e;
+      --special: #06b6d4;
+      --shadow: 0 20px 40px rgba(0,0,0,0.28);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124,58,237,.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(34,197,94,.12), transparent 24%),
+        linear-gradient(180deg, #0b0d12, #0f1117 30%, #0d1016 100%);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      color: white;
+      padding: 14px 18px;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+      transition: transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(1px) scale(.99); }
+    button.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+    button.good { background: linear-gradient(135deg, #16a34a, #22c55e); }
+    button.danger { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    button.secondary { background: linear-gradient(135deg, #334155, #475569); }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 290px;
+      height: 100vh;
+      background: rgba(12, 15, 22, .92);
+      backdrop-filter: blur(18px);
+      border-right: 1px solid var(--line);
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+      z-index: 50;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .brand strong { font-size: 1.08rem; }
+    .brand span { color: var(--muted); font-size: .85rem; }
+
+    .nav-group {
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.02);
+      transition: .18s ease;
+    }
+    .nav-link:hover { background: rgba(255,255,255,.06); transform: translateX(2px); }
+    .nav-link .ico { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 10px; background: rgba(124,58,237,.18); }
+    .nav-note {
+      margin-top: auto;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.5;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+      z-index: 40;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+
+    .main {
+      width: 100%;
+      padding: 20px;
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .icon-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      color: var(--text);
+      box-shadow: none;
+    }
+    .hero-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hero-title h1 { margin: 0; font-size: clamp(1.4rem, 2.8vw, 2.4rem); }
+    .hero-title p { margin: 0; color: var(--muted); }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+    .grid.home {
+      grid-template-columns: 1.2fr .9fr;
+      align-items: start;
+    }
+    .grid.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .card h2, .card h3, .card h4 { margin-top: 0; }
+    .card h2 { margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .field label { font-weight: 700; }
+    .field input[type="number"], .field select, .field textarea {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding: 14px 15px;
+      outline: none;
+    }
+    .field textarea { min-height: 120px; resize: vertical; }
+
+    .segmented {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .segmented label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      cursor: pointer;
+      user-select: none;
+    }
+    .segmented input { accent-color: var(--accent); }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .stat {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .stat span { display: block; color: var(--muted); font-size: .86rem; }
+    .stat strong { display: block; margin-top: 4px; font-size: 1.2rem; }
+
+    .preset-preview {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: .92rem;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+    }
+    .chip.good { background: rgba(34,197,94,.12); }
+    .chip.bad { background: rgba(239,68,68,.12); }
+    .chip.special { background: rgba(6,182,212,.12); }
+
+    .role-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .role-control .meta { display: grid; gap: 2px; }
+    .role-control .meta small { color: var(--muted); }
+    .count-controls { display: flex; align-items: center; gap: 8px; }
+    .count-badge {
+      min-width: 42px;
+      text-align: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(124,58,237,.16);
+      border: 1px solid rgba(124,58,237,.28);
+      font-weight: 800;
+    }
+    .mini-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      padding: 0;
+      box-shadow: none;
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--line);
+    }
+
+    .warning {
+      border-radius: 18px;
+      border: 1px solid rgba(245,158,11,.35);
+      background: rgba(245,158,11,.08);
+      padding: 12px 14px;
+      color: #ffe8b0;
+      line-height: 1.5;
+    }
+    .success {
+      border-radius: 18px;
+      border: 1px solid rgba(34,197,94,.35);
+      background: rgba(34,197,94,.08);
+      padding: 12px 14px;
+      color: #cbf7d7;
+      line-height: 1.5;
+    }
+
+    .assign-wrap {
+      display: grid;
+      grid-template-columns: 1fr .7fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .assign-card {
+      min-height: 520px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .assign-card::before {
+      content: "";
+      position: absolute;
+      inset: -60px;
+      background: radial-gradient(circle at center, rgba(124,58,237,.18), transparent 55%);
+      pointer-events: none;
+    }
+    .assign-stage { position: relative; width: 100%; max-width: 560px; }
+    .big-role {
+      display: grid;
+      gap: 16px;
+      padding: 28px;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
+      min-height: 360px;
+      place-content: center;
+    }
+    .big-role.hidden-role {
+      background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(17,24,39,.85));
+    }
+    .big-role .icon {
+      font-size: 4rem;
+      line-height: 1;
+    }
+    .big-role .role-name { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; margin: 0; }
+    .big-role .role-type { color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+    .big-role .role-desc { color: #dce3f7; line-height: 1.65; font-size: 1.02rem; }
+    .assign-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+
+    .player-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .locked-mask {
+      display: grid;
+      place-items: center;
+      min-height: 180px;
+      border: 1px dashed rgba(255,255,255,.14);
+      border-radius: 18px;
+      color: var(--muted);
+      padding: 18px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .page-header {
+      margin-bottom: 14px;
+    }
+    .page-header h2 { margin-bottom: 4px; }
+
+    .accordion { display: grid; gap: 12px; }
+    .acc-item {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.03);
+      overflow: hidden;
+    }
+    .acc-btn {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      box-shadow: none;
+      border: 0;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text);
+      font-weight: 800;
+    }
+    .acc-content {
+      display: none;
+      padding: 0 18px 18px;
+      color: #d9def0;
+      line-height: 1.65;
+    }
+    .acc-item.open .acc-content { display: block; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .role-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.03);
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .role-card h4 { margin: 0; }
+    .role-card p { margin: 0; color: #d9def0; line-height: 1.6; }
+    .role-card .role-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .role-card .role-head span { color: var(--muted); font-size: .86rem; }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+
+    .hide { display: none !important; }
+    .nowrap { white-space: nowrap; }
+
+    @media (max-width: 1080px) {
+      .grid.home, .assign-wrap, .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .stat-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 700px) {
+      .main { padding: 14px; }
+      .topbar { align-items: flex-start; }
+      .stat-row { grid-template-columns: 1fr; }
+      .sidebar { width: 88vw; }
+    }
+  </style>
 </head>
 <body>
-    
-    <h1>Lupus in Tabula</h1>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <strong>Lupus in Tabula</strong>
+          <span>Interfaccia locale per party</span>
+        </div>
+        <button class="icon-btn" id="closeSidebarBtn" aria-label="Chiudi menu">✕</button>
+      </div>
 
-        <p>Il gioco del Lupus in Tabula è un gioco di società che simula un villaggio medievale in cui alcuni abitanti sono lupi mannari e
-            dev
-            ono essere smascherati dagli altri abitanti del villaggio. Il gioco è diviso in due fasi: una notturna e una diurna. Durante la
-            fase notturna i lupi mannari si svegliano e decidono chi eliminare, mentre durante la fase diurna gli abitanti del villaggio    
-            discutono e votano chi eliminare. Il gioco termina quando tutti i lupi mannari sono stati eliminati o quando il numero di lupi
-            mannari è uguale al numero di abitanti del villaggio.</p>
+      <div class="nav-group">
+        <a class="nav-link" href="#home" data-page-link="home">
+          <span class="ico">🏠</span>
+          <span>Home</span>
+        </a>
+        <a class="nav-link" href="#rules" data-page-link="rules">
+          <span class="ico">📜</span>
+          <span>Regolamento</span>
+        </a>
+        <a class="nav-link" href="#roles" data-page-link="roles">
+          <span class="ico">🎭</span>
+          <span>Ruoli</span>
+        </a>
+        <a class="nav-link" href="#assign" data-page-link="assign">
+          <span class="ico">🃏</span>
+          <span>Assegnazione</span>
+        </a>
+      </div>
 
+      <div class="nav-note">
+        Uso locale: il dispositivo mostra un ruolo alla volta, passando di mano in mano.
+        Nessun account, nessun salvataggio online.
+      </div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
 
-    <h2>Regole del gioco</h2>
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn" id="menuBtn" aria-label="Apri menu">☰</button>
+          <div class="hero-title">
+            <h1>Lupus in Tabula</h1>
+            <p>Setup locale, assegnazione ruoli e consultazione regolamento</p>
+          </div>
+        </div>
+        <div class="chip-row">
+          <span class="chip special">Modalità locale</span>
+          <span class="chip good">Buoni</span>
+          <span class="chip bad">Lupi</span>
+        </div>
+      </header>
 
-        <ul>
-            <li>Il gioco è diviso in due fasi: una notturna e una diurna.</li>
-            <li>Durante la fase notturna i lupi mannari si svegliano e decidono chi eliminare.</li>
-            <li>Durante la fase diurna gli abitanti del villaggio discutono e votano chi eliminare.</li>
-            <li>Il gioco termina quando tutti i lupi mannari sono stati eliminati o quando il numero di lupi mannari è uguale al numero di
-                abitanti del villaggio.</li>
-        </ul>
+      <!-- HOME -->
+      <section class="page active" id="page-home">
+        <div class="grid home">
+          <div class="card">
+            <div class="page-header">
+              <h2>Configura la partita</h2>
+              <p class="muted">Imposta il numero di giocatori, scegli il tipo di setup e genera il mazzo per l’assegnazione dei ruoli.</p>
+            </div>
 
+            <div class="field">
+              <label for="playersInput">Numero di giocatori</label>
+              <input type="number" id="playersInput" min="5" max="32" value="10" />
+            </div>
 
-    <h2>Personaggi</h2>
+            <div class="field">
+              <label>Modalità</label>
+              <div class="segmented">
+                <label><input type="radio" name="mode" value="preset" checked /> Preimpostata</label>
+                <label><input type="radio" name="mode" value="custom" /> Personalizzata</label>
+              </div>
+            </div>
 
-        <ul>
-            <li>Lupo mannaro: deve eliminare gli abitanti del villaggio.</li>
-            <li>Contadino: deve eliminare i lupi mannari.</li>
-            <li>Veggente: può indovinare il ruolo di un giocatore.</li>
-            <li>Guardia: può proteggere un giocatore dalla morte.</li>
-            <li>2 Massoni: contadini che sanno vicendevolmente la loro innocenza</li>
-            <li>Lupetto: se ucciso dai lupi si trasforma in uno di loro</li>
-            <li>Gufo: può votare chiunque preferisca durante la notte</li>
-        </ul>
-        
+            <div id="presetBlock">
+              <div class="success" id="presetSummary"></div>
+              <div class="preset-preview" id="presetPreview"></div>
+            </div>
 
+            <div id="customBlock" class="hide">
+              <div class="warning" style="margin-bottom:14px;">
+                In modalità personalizzata il totale dei ruoli deve coincidere con il numero di giocatori.
+                I contatori qui sotto aggiornano in tempo reale la composizione del mazzo.
+              </div>
+              <div class="grid two" id="customRoles"></div>
+              <div class="stat-row" id="customStats"></div>
+            </div>
 
-    <h2>Varianti</h2>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+              <button class="good" id="startGameBtn">Avvia partita</button>
+              <button class="secondary" id="autoFillBtn">Compila preset</button>
+            </div>
+            <div class="footer-note" id="setupMessage"></div>
+          </div>
 
-        <ul>
-            <li>Lupo solitario: il lupo mannaro gioca da solo contro tutti gli altri giocatori.</li>
-            <li>Numero di lupi mannari: il numero di lupi mannari può variare a seconda del numero di giocatori.</li>
-            <li>Personaggi speciali: possono essere aggiunti nuovi personaggi con abilità speciali.</li>
-        </ul>
+          <div class="card">
+            <h2>Anteprima rapida</h2>
+            <p class="muted">Questa colonna mostra una lettura sintetica della composizione scelta, utile prima di iniziare il party.</p>
+            <div class="stat-row" id="previewStats"></div>
+            <div style="margin-top:16px;" class="locked-mask" id="previewDetails">
+              Inserisci il numero di giocatori e scegli la modalità per vedere la composizione suggerita.
+            </div>
+          </div>
+        </div>
+      </section>
 
-    
-    
-    <button id="playButton">Gioca</button>
-    
-    <div id="playerInput" style="display:none;">
-        <label for="numPlayers">Numero di giocatori:</label>
-        <input type="number" id="numPlayers" min="8" max="15">
-        <button id="addPlayersButton">Aggiungi giocatori</button>
-    </div>
-    
-    <div id="playerNames" style="display:none;">
-        <h2>Inserisci i nomi dei giocatori</h2>
-        <div id="namesList"></div>
-        <button id="assignRolesButton">Assegna ruoli</button>
-    </div>
-    
-    <div id="assignedRoles" style="display:none;">
-        <h2>Ruoli assegnati</h2>
-        <div id="currentPlayer"></div>
-        <button id="revealRoleButton">Svela ruolo</button>
-        <button id="nextPlayerButton" style="display:none;">Prossimo giocatore</button>
-    </div>
-    
-    <script>
-        document.getElementById('playButton').addEventListener('click', function() {
-            document.getElementById('playerInput').style.display = 'block';
+      <!-- ASSIGN -->
+      <section class="page" id="page-assign">
+        <div class="page-header">
+          <h2>Assegnazione ruoli</h2>
+          <p class="muted">Passa il dispositivo da un giocatore all’altro. Ogni persona vede il proprio ruolo una sola volta.</p>
+        </div>
+        <div class="assign-wrap">
+          <div class="card assign-card">
+            <div class="assign-stage">
+              <div class="player-pill" id="playerPill">Giocatore 1</div>
+              <div class="big-role hidden-role" id="roleStage">
+                <div class="icon">🕯️</div>
+                <h3 class="role-name">Schermo coperto</h3>
+                <div class="role-type">Pronto per la rivelazione</div>
+                <div class="role-desc">Premi il pulsante per mostrare il ruolo al giocatore corrente. Dopo la visione, conferma e passa il dispositivo al prossimo giocatore.</div>
+              </div>
+              <div class="assign-actions">
+                <button id="revealBtn" class="good">Mostra il tuo ruolo</button>
+                <button id="nextBtn" class="secondary hide">Ho visto il ruolo</button>
+                <button id="finishBtn" class="danger hide">Fine distribuzione</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Stato distribuzione</h3>
+            <div id="assignSummary" class="stat-row"></div>
+            <div style="margin-top:16px;" class="locked-mask" id="assignInstructions">
+              Quando la partita sarà avviata, qui appariranno il ruolo e la descrizione completa del giocatore corrente.
+            </div>
+            <div style="margin-top:16px;" class="warning">
+              Suggerimento d’uso: tieni il telefono in verticale, avvicina il dispositivo al giocatore e lascia che legga il ruolo prima di premere “Ho visto il ruolo”.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RULES -->
+      <section class="page" id="page-rules">
+        <div class="page-header">
+          <h2>Regolamento</h2>
+          <p class="muted">Versione estesa, pensata per il sito e per una lettura chiara in partita.</p>
+        </div>
+        <div class="accordion" id="rulesAccordion"></div>
+      </section>
+
+      <!-- ROLES -->
+      <section class="page" id="page-roles">
+        <div class="page-header">
+          <h2>Ruoli</h2>
+          <p class="muted">Tutti i ruoli disponibili, con descrizione, obiettivo e funzione nel bilanciamento.</p>
+        </div>
+        <div class="role-grid" id="rolesGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const ROLE_DEFS = [
+      { key: 'contadino', name: 'Contadino', icon: '🌾', type: 'Buono', category: 'good', short: 'Ruolo senza poteri speciali. Vince con il villaggio.', desc: 'Il Contadino non agisce di notte, ma è il cuore del villaggio durante il giorno. Vota, osserva, pone domande, interpreta i comportamenti e prova a smascherare i lupi. In una partita equilibrata è la base numerica che rende possibile la deduzione.' },
+      { key: 'veggente', name: 'Veggente', icon: '🔮', type: 'Buono', category: 'good', short: 'Ogni notte scopre se un giocatore è un lupo.', desc: 'Di notte indica un giocatore vivo e il narratore gli rivela se appartiene al branco dei lupi oppure no. È uno dei ruoli più forti perché produce informazione diretta. Deve però dosare bene quando esporsi: rivelarsi troppo presto lo rende un bersaglio facile.' },
+      { key: 'guardia_del_corpo', name: 'Guardia del Corpo', icon: '🛡️', type: 'Buono', category: 'good', short: 'Protegge un giocatore, anche sé stessa.', desc: 'Di notte sceglie un giocatore da proteggere. Se i lupi attaccano quel bersaglio, la vittima viene salvata. Può proteggere sé stessa. Nel tuo regolamento questa carta prende il posto della prostituta ed è pensata come protezione diretta e tattica.' },
+      { key: 'medium', name: 'Medium', icon: '👻', type: 'Buono', category: 'good', short: 'Conosce il ruolo dei morti.', desc: 'A partire dalla notte successiva alla prima vittima, il Medium interroga un giocatore eliminato e ottiene informazioni sul suo ruolo o sulla sua natura, in base alle regole del tavolo. È un ruolo che cresce di valore con l’avanzare della partita, perché lavora sulla memoria degli eventi.' },
+      { key: 'lupo', name: 'Lupo Mannaro', icon: '🐺', type: 'Cattivo', category: 'bad', short: 'Di notte sceglie una vittima insieme agli altri lupi.', desc: 'I Lupi Mannari formano la fazione segreta avversaria del villaggio. Di notte si riconoscono, comunicano in silenzio e scelgono una vittima. Di giorno devono mentire, confondere, deviare i sospetti e sopravvivere ai voti. Il loro obiettivo è eliminare tutti gli altri giocatori.' },
+      { key: 'assassino', name: 'Assassino', icon: '🗡️', type: 'Speciale', category: 'special', short: 'Uccide di notte, ma non è un lupo.', desc: 'Di notte viene svegliato dal narratore e indica un giocatore da uccidere. Non fa parte del branco, ma se i lupi vincono, vince con loro. Aumenta la pressione notturna e rende più difficile per il villaggio capire da dove arrivino le morti.' },
+      { key: 'guardia', name: 'Guardia', icon: '🚓', type: 'Speciale', category: 'special', short: 'Protegge un giocatore ma non sé stessa.', desc: 'Di notte sceglie un giocatore da proteggere. Se i lupi attaccano quel bersaglio, il giocatore sopravvive. Non può proteggere sé stessa; se sceglie un lupo, muore. È una protezione più semplice e più rischiosa della Guardia del Corpo.' },
+      { key: 'gufo', name: 'Gufo', icon: '🦉', type: 'Speciale', category: 'special', short: 'Sposta il risultato delle votazioni.', desc: 'Di notte indica un giocatore. Il giorno seguente, dopo la prima fase di voto, il giocatore gufato prende il posto del secondo più votato e va al rogo. È un ruolo di manipolazione molto forte, perché altera la politica del villaggio e punisce le letture troppo semplici.' },
+      { key: 'criceto_mannaro', name: 'Criceto Mannaro', icon: '🐹', type: 'Speciale', category: 'special', short: 'Se viene ucciso dai lupi, entra nel branco.', desc: 'Se i lupi lo colpiscono, non muore subito: la notte successiva si unisce al branco come un lupo a tutti gli effetti. Se invece resta vivo da solo senza riuscire a entrare nel branco, perde. È un ruolo di conversione che può ribaltare gli equilibri nel finale.' },
+      { key: 'copiatore', name: 'Copiatore', icon: '🪞', type: 'Speciale', category: 'special', short: 'Copia il ruolo di un lupo o del veggente.', desc: 'Di notte, prima della scelta dei lupi, indica un giocatore. Se il bersaglio è un lupo o il Veggente, il Copiatore assume lo stesso ruolo per il resto della partita. Se non riesce a copiare nessuno e la partita finisce, perde. È potente, ma va gestito con attenzione.' },
+      { key: 'matto', name: 'Matto', icon: '🤪', type: 'Speciale', category: 'special', short: 'Vince facendosi eliminare al rogo.', desc: 'Il Matto ha un obiettivo personale: farsi eliminare tramite votazione. È un ruolo che genera bluff, teatro e tensione sociale. Il suo fascino sta nel rovesciare completamente la logica del gioco, perché il giocatore deve sembrare sospetto senza diventare troppo ovvio.' },
+      { key: 'lupo_bastonato', name: 'Lupo Bastonato', icon: '🪵', type: 'Speciale', category: 'special', short: 'Può trovare un lupo e unirsi al branco.', desc: 'Non conosce gli altri lupi. Prima della scelta notturna indica un giocatore: se quel giocatore è un lupo, entra immediatamente nel branco. Se resta isolato senza riuscire a unirsi, muore. È un ruolo ibrido che introduce la possibilità di crescita del branco durante la partita.' },
+      { key: 'demone', name: 'Demone', icon: '😈', type: 'Speciale', category: 'special', short: 'Vince solo se viene ucciso dai lupi dopo la quarta notte.', desc: 'Dalla quarta notte in poi, il Demone vince soltanto se i lupi lo scelgono come vittima. È un ruolo di vittoria personale molto particolare, perfetto quando si vuole una partita più imprevedibile e narrativa.' },
+      { key: 'zombie', name: 'Zombie', icon: '🧟', type: 'Speciale', category: 'special', short: 'Infetta i giocatori e vince se infetta tutti.', desc: 'Di notte indica un giocatore e lo infetta. L’infezione resta attiva per tutta la partita. Se riesce a infettare tutti i giocatori, vince. Se nel turno in cui completa l’infezione totale viene colpito dai lupi, muore. È una vittoria alternativa molto forte e molto scenica.' },
+      { key: 'angelo_custode', name: 'Angelo Custode', icon: '👼', type: 'Speciale', category: 'special', short: 'Si sacrifica per salvare qualcuno.', desc: 'Di notte indica un giocatore. Se quel giocatore viene scelto dai lupi, l’Angelo Custode muore al posto suo. Se indica un lupo, invece, non ottiene alcun vantaggio e può essere colpito normalmente. Vince con i buoni.' },
+      { key: 'cacciatore', name: 'Cacciatore', icon: '🏹', type: 'Speciale', category: 'special', short: 'Può uccidere un giocatore di notte.', desc: 'Di notte viene svegliato dal narratore e indica un giocatore da uccidere. Non è un lupo, ma se i lupi vincono, vince con loro. È una carta aggressiva che aumenta la pressione e rende la notte più pericolosa.' },
+      { key: 'cappuccetto_rosso', name: 'Cappuccetto Rosso', icon: '🔴', type: 'Speciale', category: 'special', short: 'Deve essere scelta due volte dai lupi.', desc: 'Per essere eliminata dai lupi, questa carta deve essere scelta due volte. Se muore al rogo, invece, esce subito. È una carta resistente che allunga la partita e obbliga i lupi a investire su di lei più di una volta.' },
+      { key: 'censuratore', name: 'Censuratore', icon: '🙊', type: 'Speciale', category: 'special', short: 'Silenzia un giocatore nella votazione successiva.', desc: 'Il giocatore indicato di notte non può partecipare alle votazioni del giorno seguente. Se il Censuratore muore per mano dei lupi, la censura non si applica. È utile per togliere peso a un sospetto o per ridurre l’effetto di un ruolo troppo influente.' },
+      { key: 'duca', name: 'Duca', icon: '🎩', type: 'Speciale', category: 'special', short: 'Conosce la Duchessa.', desc: 'Di notte viene svegliato insieme alla Duchessa, così da conoscere il rispettivo ruolo. È un ruolo di collegamento e fiducia, più utile in tavoli in cui la comunicazione è centrale che in partite molto rapide.' },
+      { key: 'duchessa', name: 'Duchessa', icon: '👑', type: 'Speciale', category: 'special', short: 'Conosce il Duca.', desc: 'Di notte viene svegliata insieme al Duca per conoscere il rispettivo ruolo. Come il Duca, non ha un potere offensivo diretto, ma crea un’informazione privata che può aiutare il villaggio a costruire alleanze e coppie credibili.' },
+      { key: 'carceriere', name: 'Carceriere', icon: '⛓️', type: 'Speciale', category: 'special', short: 'Prende un prigioniero e decide il suo destino.', desc: 'Dalla seconda notte può imprigionare un giocatore. Il prigioniero non sa di essere in carcere. Nella notte successiva il Carceriere può scegliere se ucciderlo, liberarlo o sostituirlo con un altro prigioniero. Se il Carceriere muore, il prigioniero viene liberato.' },
+      { key: 'giulietta', name: 'Giulietta', icon: '💞', type: 'Speciale', category: 'special', short: 'Coppia narrativa con Romeo.', desc: 'Di notte si sveglia insieme a Romeo per conoscerne il ruolo. Ogni notte la coppia decide dove dormire. In base alla tua regola, la posizione scelta influenza l’esito se i lupi attaccano uno dei due. È un ruolo molto scenico e adatto a un tavolo che vuole anche una forte componente narrativa.' },
+      { key: 'romeo', name: 'Romeo', icon: '❤️', type: 'Speciale', category: 'special', short: 'Coppia narrativa con Giulietta.', desc: 'Vedi Giulietta. Romeo condivide la dinamica di coppia e il legame notturno. È pensato per creare una relazione visibile al tavolo e una protezione/fragilità condivisa molto forte sul piano teatrale.' },
+      { key: 'scrutatore', name: 'Scrutatore', icon: '🔍', type: 'Speciale', category: 'special', short: 'Decide se le votazioni saranno rese segrete al narratore.', desc: 'Dalla seconda notte, una volta ogni due notti, viene svegliato dal narratore e può decidere se le votazioni del giorno seguente verranno comunicate in segreto al narratore oppure no. È una carta di controllo procedurale, utile per cambiare il ritmo della partita.' },
+      { key: 'cieco', name: 'Cieco', icon: '🕶️', type: 'Speciale', category: 'special', short: 'È un contadino, ma se resta l’ultimo insieme ai lupi vince anche lui.', desc: 'All’inizio è un normale Contadino, ma possiede una condizione di vittoria particolare: se alla fine della partita rimane in vita insieme al branco di lupi, vince anche lui. È un ruolo molto semplice, ma capace di creare finali inattesi.' }
+    ];
+
+    const RULE_SECTIONS = [
+      {
+        title: 'Idea generale del gioco',
+        body: 'Lupus in Tabula è un gioco di deduzione, bluff e votazione. Il villaggio deve scoprire chi sono i lupi, mentre i lupi devono eliminare gli altri giocatori senza farsi riconoscere. La partita alterna sempre una fase di Notte e una di Giorno.'
+      },
+      {
+        title: 'Preparazione',
+        body: 'Il narratore sceglie il set di carte in base al numero di giocatori, mescola il mazzo e distribuisce un ruolo coperto a ciascun partecipante. Ogni giocatore legge la propria carta in segreto e la conserva fino alla fine della partita.'
+      },
+      {
+        title: 'La Notte',
+        body: 'Tutti chiudono gli occhi. Il narratore chiama i ruoli nell’ordine stabilito. I lupi scelgono una vittima in silenzio. Il Veggente scopre un’informazione. La Guardia del Corpo, il Medium e gli altri ruoli speciali compiono la loro azione senza parlare a voce.'
+      },
+      {
+        title: 'Il Giorno',
+        body: 'Il narratore annuncia il risveglio del villaggio ed eventuali vittime della notte. I giocatori discutono, accusano, si difendono e cercano di leggere il tavolo. Gli eliminati non partecipano più alle votazioni, salvo eccezioni previste dai ruoli.'
+      },
+      {
+        title: 'Votazione',
+        body: 'Dopo la discussione, il villaggio vota per eliminare un sospetto. La votazione può essere strutturata in una o due fasi, secondo la versione scelta. Il sistema del sito può supportare entrambe le modalità in modo narrativo, lasciando comunque il controllo al narratore.'
+      },
+      {
+        title: 'Fine della partita',
+        body: 'I buoni vincono se tutti i lupi vengono eliminati. I lupi vincono se riescono a rimanere in numero sufficiente da controllare la partita. Alcuni ruoli speciali possiedono condizioni di vittoria autonome e possono vincere da soli o con una fazione specifica.'
+      },
+      {
+        title: 'Bilanciamento',
+        body: 'Una partita ben bilanciata dipende da tre elementi: numero di lupi, quantità di informazione disponibile ai buoni e presenza di ruoli che influenzano protezione o votazione. Troppi ruoli forti rendono il villaggio dominante; troppi lupi rendono la partita troppo breve.'
+      }
+    ];
+
+    const ROLE_GROUPS = [
+      {
+        title: 'Carte buone',
+        items: ['contadino', 'veggente', 'guardia_del_corpo', 'medium']
+      },
+      {
+        title: 'Carte cattive',
+        items: ['lupo']
+      },
+      {
+        title: 'Carte speciali',
+        items: ROLE_DEFS.filter(r => r.category === 'special').map(r => r.key)
+      }
+    ];
+
+    const CUSTOM_DEFAULTS = {
+      lupo: 2,
+      veggente: 1,
+      guardia_del_corpo: 1,
+      medium: 1,
+      guardia: 1,
+      cacciatore: 1,
+      angelo_custode: 1,
+      avvocato: 0,
+      censuratore: 0,
+      gufo: 0,
+      carceriere: 0,
+      matto: 0,
+      copiatore: 0,
+      criceto_mannaro: 0,
+      lupo_bastonato: 0,
+      demone: 0,
+      zombie: 0,
+      cappuccetto_rosso: 0,
+      duca: 0,
+      duchessa: 0,
+      romeo: 0,
+      giulietta: 0,
+      scrutatore: 0,
+      cieco: 0,
+      assassino: 0,
+      contadino: 5
+    };
+
+    const state = {
+      page: 'home',
+      mode: 'preset',
+      players: 10,
+      customCounts: { ...CUSTOM_DEFAULTS },
+      deck: [],
+      currentIndex: 0,
+      revealMode: false,
+      presetConfig: null
+    };
+
+    const el = (id) => document.getElementById(id);
+    const byName = (name) => document.querySelectorAll(`[name="${name}"]`);
+    const totalCustomCount = () => Object.values(state.customCounts).reduce((a,b) => a + b, 0);
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function roleByKey(key) { return ROLE_DEFS.find(r => r.key === key); }
+
+    function computePreset(players) {
+      const p = clamp(players, 5, 32);
+      const wolves = clamp(2 + Math.floor(Math.max(0, p - 7) / 5), 2, 6);
+      const base = {
+        lupo: wolves,
+        veggente: p >= 8 ? 1 : 0,
+        guardia_del_corpo: p >= 9 ? 1 : 0,
+        medium: p >= 10 ? 1 : 0,
+        guardia: p >= 12 ? 1 : 0,
+        cacciatore: p >= 13 ? 1 : 0,
+        angelo_custode: p >= 15 ? 1 : 0,
+        avvocato: p >= 16 ? 1 : 0,
+        censuratore: p >= 18 ? 1 : 0,
+        gufo: p >= 20 ? 1 : 0,
+        carceriere: p >= 22 ? 1 : 0,
+        contadino: 0
+      };
+
+      let specials = Object.entries(base).filter(([k,v]) => k !== 'lupo' && k !== 'contadino' && v > 0).reduce((s,[k,v]) => s + v, 0);
+      const remaining = Math.max(0, p - (base.lupo + specials));
+      base.contadino = remaining;
+
+      return base;
+    }
+
+    function presetList(cfg) {
+      const list = [];
+      Object.entries(cfg).forEach(([key, count]) => {
+        for (let i = 0; i < count; i++) list.push(key);
+      });
+      return list;
+    }
+
+    function buildDeckFromCounts(counts) {
+      const deck = [];
+      Object.entries(counts).forEach(([key, count]) => {
+        for (let i = 0; i < count; i++) deck.push(key);
+      });
+      return shuffle(deck);
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function openPage(page) {
+      state.page = page;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      el(`page-${page}`).classList.add('active');
+      closeSidebar();
+      window.location.hash = page;
+      if (page === 'assign') renderAssign();
+    }
+
+    function openSidebar() {
+      el('sidebar').classList.add('open');
+      el('overlay').classList.add('show');
+    }
+    function closeSidebar() {
+      el('sidebar').classList.remove('open');
+      el('overlay').classList.remove('show');
+    }
+
+    function modeValue() {
+      return [...byName('mode')].find(r => r.checked)?.value || 'preset';
+    }
+
+    function renderPreset() {
+      const players = state.players;
+      const cfg = computePreset(players);
+      state.presetConfig = cfg;
+      const wolves = cfg.lupo;
+      const specials = Object.entries(cfg).filter(([k,v]) => !['lupo','contadino'].includes(k) && v > 0).reduce((s,[,v]) => s + v, 0);
+      const villagers = cfg.contadino + (cfg.veggente || 0) + (cfg.guardia_del_corpo || 0) + (cfg.medium || 0) + (cfg.guardia || 0) + (cfg.cacciatore || 0) + (cfg.angelo_custode || 0) + (cfg.avvocato || 0) + (cfg.censuratore || 0) + (cfg.gufo || 0) + (cfg.carceriere || 0);
+
+      el('presetSummary').innerHTML = `
+        Setup consigliato per <strong>${players} giocatori</strong>: <strong>${wolves} lupi</strong>, <strong>${specials} ruoli speciali</strong> e il resto in Contadini. Il villaggio parte con informazione e protezione sufficiente per restare divertente senza diventare ingestibile.
+      `;
+
+      const preview = el('presetPreview');
+      preview.innerHTML = '';
+      const chips = presetList(cfg).map(key => {
+        const role = roleByKey(key);
+        return `<span class="chip ${role.category}">${role.icon} ${role.name}</span>`;
+      });
+      preview.innerHTML = `<div class="chip-row">${chips.join('')}</div>`;
+
+      renderPreviewStats(cfg);
+      renderSetupMessage();
+    }
+
+    function renderPreviewStats(cfg) {
+      const wolves = cfg.lupo || 0;
+      const specials = Object.entries(cfg).filter(([k,v]) => !['lupo','contadino'].includes(k) && v > 0).reduce((s,[,v]) => s + v, 0);
+      const villagers = (cfg.contadino || 0) + (cfg.veggente || 0) + (cfg.guardia_del_corpo || 0) + (cfg.medium || 0) + (cfg.guardia || 0) + (cfg.cacciatore || 0) + (cfg.angelo_custode || 0) + (cfg.avvocato || 0) + (cfg.censuratore || 0) + (cfg.gufo || 0) + (cfg.carceriere || 0);
+      el('previewStats').innerHTML = `
+        <div class="stat"><span>Giocatori</span><strong>${state.players}</strong></div>
+        <div class="stat"><span>Lupi</span><strong>${wolves}</strong></div>
+        <div class="stat"><span>Speciali</span><strong>${specials}</strong></div>
+        <div class="stat"><span>Buoni totali</span><strong>${villagers}</strong></div>
+      `;
+      el('previewDetails').innerHTML = `
+        <div>
+          <strong>Composizione proposta</strong><br><br>
+          ${Object.entries(cfg).filter(([,v]) => v > 0).map(([k,v]) => {
+            const r = roleByKey(k);
+            return `${r.icon} <strong>${r.name}</strong>: ${v}`;
+          }).join('<br>')}
+        </div>
+      `;
+    }
+
+    function renderCustomControls() {
+      const container = el('customRoles');
+      const stats = el('customStats');
+      container.innerHTML = '';
+
+      ROLE_GROUPS.forEach(group => {
+        const groupCard = document.createElement('div');
+        groupCard.className = 'card';
+        groupCard.style.padding = '14px';
+        const title = document.createElement('h3');
+        title.textContent = group.title;
+        title.style.marginBottom = '10px';
+        groupCard.appendChild(title);
+
+        const inner = document.createElement('div');
+        inner.style.display = 'grid';
+        inner.style.gap = '10px';
+
+        group.items.forEach(key => {
+          const role = roleByKey(key);
+          const row = document.createElement('div');
+          row.className = 'role-control';
+          row.innerHTML = `
+            <div class="meta">
+              <strong>${role.icon} ${role.name}</strong>
+              <small>${role.short}</small>
+            </div>
+            <div class="count-controls">
+              <button class="mini-btn" data-dec="${key}">−</button>
+              <span class="count-badge" id="count-${key}">${state.customCounts[key] ?? 0}</span>
+              <button class="mini-btn" data-inc="${key}">+</button>
+            </div>
+          `;
+          inner.appendChild(row);
         });
 
-        document.getElementById('addPlayersButton').addEventListener('click', function() {
-            const numPlayers = parseInt(document.getElementById('numPlayers').value);
-            if (numPlayers < 8 || numPlayers > 15) {
-                alert('Il numero di giocatori deve essere compreso tra 8 e 15.');
-                return;
-            }
+        groupCard.appendChild(inner);
+        container.appendChild(groupCard);
+      });
 
-            const namesList = document.getElementById('namesList');
-            namesList.innerHTML = '';
-            for (let i = 0; i < numPlayers; i++) {
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.placeholder = `Nome giocatore ${i + 1}`;
-                input.id = `playerName${i}`;
-                namesList.appendChild(input);
-                namesList.appendChild(document.createElement('br'));
-            }
-            document.getElementById('playerNames').style.display = 'block';
+      updateCustomStats();
+
+      container.querySelectorAll('[data-inc]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-inc');
+          state.customCounts[key] = (state.customCounts[key] || 0) + 1;
+          el(`count-${key}`).textContent = state.customCounts[key];
+          updateCustomStats();
         });
-
-        document.getElementById('assignRolesButton').addEventListener('click', function() {
-            const numPlayers = parseInt(document.getElementById('numPlayers').value);
-            const roles = [];
-            const numWerewolves = Math.floor(numPlayers / 3);
-            const numVillagers = numPlayers - numWerewolves - 3; // 3 special roles
-
-            for (let i = 0; i < numWerewolves; i++) {
-                roles.push('Lupo mannaro');
-            }
-            for (let i = 0; i < numVillagers; i++) {
-                roles.push('Contadino');
-            }
-            roles.push('Veggente', 'Gufo', 'Guardia');
-
-            const players = [];
-            for (let i = 0; i < numPlayers; i++) {
-                const playerName = document.getElementById(`playerName${i}`).value;
-                players.push({ name: playerName, role: roles.splice(Math.floor(Math.random() * roles.length), 1)[0] });
-            }
-
-            let currentPlayerIndex = 0;
-            const currentPlayerDiv = document.getElementById('currentPlayer');
-            const revealRoleButton = document.getElementById('revealRoleButton');
-            const nextPlayerButton = document.getElementById('nextPlayerButton');
-
-            function showNextPlayer() {
-                if (currentPlayerIndex < players.length) {
-                    currentPlayerDiv.textContent = `Giocatore: ${players[currentPlayerIndex].name}`;
-                    revealRoleButton.style.display = 'block';
-                    nextPlayerButton.style.display = 'none';
-                } else {
-                    currentPlayerDiv.textContent = 'Tutti i ruoli sono stati svelati.';
-                    revealRoleButton.style.display = 'none';
-                    nextPlayerButton.style.display = 'none';
-                }
-            }
-
-            revealRoleButton.addEventListener('click', function() {
-                currentPlayerDiv.textContent += ` - Ruolo: ${players[currentPlayerIndex].role}`;
-                revealRoleButton.style.display = 'none';
-                nextPlayerButton.style.display = 'block';
-            });
-
-            nextPlayerButton.addEventListener('click', function() {
-                currentPlayerIndex++;
-                showNextPlayer();
-            });
-
-            document.getElementById('assignedRoles').style.display = 'block';
-            showNextPlayer();
+      });
+      container.querySelectorAll('[data-dec]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-dec');
+          state.customCounts[key] = Math.max(0, (state.customCounts[key] || 0) - 1);
+          el(`count-${key}`).textContent = state.customCounts[key];
+          updateCustomStats();
         });
-    </script>
+      });
+    }
+
+    function updateCustomStats() {
+      const total = totalCustomCount();
+      const diff = state.players - total;
+      const wolves = state.customCounts.lupo || 0;
+      const specials = Object.entries(state.customCounts)
+        .filter(([k, v]) => !['lupo', 'contadino'].includes(k) && v > 0)
+        .reduce((sum, [, v]) => sum + v, 0);
+      const villagers = total - wolves;
+
+      el('customStats').innerHTML = `
+        <div class="stat"><span>Totale ruoli</span><strong>${total}</strong></div>
+        <div class="stat"><span>Giocatori</span><strong>${state.players}</strong></div>
+        <div class="stat"><span>Scarto</span><strong>${diff === 0 ? 'OK' : (diff > 0 ? '+' : '') + diff}</strong></div>
+        <div class="stat"><span>Lupi</span><strong>${wolves}</strong></div>
+      `;
+
+      const valid = diff === 0;
+      el('setupMessage').innerHTML = valid
+        ? `<span class="success">Composizione valida. Il mazzo è pronto per la distribuzione.</span>`
+        : `<span class="warning">La somma dei ruoli non coincide con i giocatori. Devi sistemare il totale prima di avviare la partita.</span>`;
+
+      renderPreviewStats(state.mode === 'preset' ? state.presetConfig : state.customCounts);
+    }
+
+    function renderSetupMessage() {
+      const mode = state.mode;
+      if (mode === 'preset') {
+        el('setupMessage').innerHTML = `<span class="success">Modalità preimpostata attiva. Il sistema propone un set bilanciato in base al numero di giocatori.</span>`;
+      } else {
+        updateCustomStats();
+      }
+    }
+
+    function applyModeVisibility() {
+      const mode = modeValue();
+      state.mode = mode;
+      el('presetBlock').classList.toggle('hide', mode !== 'preset');
+      el('customBlock').classList.toggle('hide', mode !== 'custom');
+      if (mode === 'preset') {
+        renderPreset();
+      } else {
+        updateCustomStats();
+      }
+    }
+
+    function buildAssignmentDeck() {
+      let deck;
+      if (state.mode === 'preset') {
+        deck = buildDeckFromCounts(state.presetConfig);
+      } else {
+        deck = buildDeckFromCounts(state.customCounts);
+      }
+      return deck;
+    }
+
+    function renderAssign() {
+      const total = state.deck.length;
+      const current = state.currentIndex + 1;
+      const roleKey = state.deck[state.currentIndex];
+      const role = roleByKey(roleKey);
+      const finished = state.currentIndex >= state.deck.length;
+
+      el('assignSummary').innerHTML = `
+        <div class="stat"><span>Giocatore</span><strong>${finished ? '—' : current + '/' + total}</strong></div>
+        <div class="stat"><span>Ruoli distribuiti</span><strong>${state.currentIndex}</strong></div>
+        <div class="stat"><span>Rimanenti</span><strong>${Math.max(0, total - state.currentIndex)}</strong></div>
+        <div class="stat"><span>Modalità</span><strong>${state.mode === 'preset' ? 'Preset' : 'Personalizzata'}</strong></div>
+      `;
+
+      if (!total) {
+        el('playerPill').textContent = 'Nessuna partita avviata';
+        el('roleStage').innerHTML = `
+          <div class="icon">🕯️</div>
+          <h3 class="role-name">Nessun mazzo</h3>
+          <div class="role-type">Torna alla home</div>
+          <div class="role-desc">Configura prima la partita e poi avvia la distribuzione dei ruoli.</div>
+        `;
+        return;
+      }
+
+      if (finished) {
+        el('playerPill').textContent = 'Distribuzione completata';
+        el('roleStage').className = 'big-role';
+        el('roleStage').innerHTML = `
+          <div class="icon">✅</div>
+          <h3 class="role-name">Ruoli assegnati</h3>
+          <div class="role-type">Preparazione terminata</div>
+          <div class="role-desc">Tutti i giocatori hanno visto il proprio ruolo. Puoi passare alla gestione della partita o consultare il regolamento e la lista dei ruoli dal menu laterale.</div>
+        `;
+        el('revealBtn').classList.add('hide');
+        el('nextBtn').classList.add('hide');
+        el('finishBtn').classList.remove('hide');
+        el('assignInstructions').innerHTML = 'La distribuzione è terminata. Il narratore può iniziare la partita o tornare alla home per una nuova configurazione.';
+        return;
+      }
+
+      el('playerPill').textContent = `Giocatore ${current}`;
+      el('revealBtn').classList.remove('hide');
+      el('nextBtn').classList.add('hide');
+      el('finishBtn').classList.add('hide');
+      el('roleStage').className = 'big-role hidden-role';
+      el('roleStage').innerHTML = `
+        <div class="icon">🕯️</div>
+        <h3 class="role-name">Schermo coperto</h3>
+        <div class="role-type">Passa il dispositivo al giocatore ${current}</div>
+        <div class="role-desc">Quando sei pronto, premi “Mostra il tuo ruolo”. Dopo la visione, conferma e passa il dispositivo al giocatore successivo.</div>
+      `;
+      el('assignInstructions').innerHTML = `
+        <strong>Fase di consegna:</strong> il dispositivo va mostrato a <strong>un solo giocatore per volta</strong>. Il ruolo viene rivelato in modo temporaneo, poi l’interfaccia torna alla schermata di passaggio.
+      `;
+    }
+
+    function revealCurrentRole() {
+      const roleKey = state.deck[state.currentIndex];
+      const role = roleByKey(roleKey);
+      el('roleStage').className = `big-role ${role.category === 'bad' ? 'bad' : role.category === 'good' ? 'good' : 'special'}`;
+      el('roleStage').innerHTML = `
+        <div class="icon">${role.icon}</div>
+        <h3 class="role-name">${role.name}</h3>
+        <div class="role-type">${role.type}</div>
+        <div class="role-desc">${role.desc}</div>
+      `;
+      el('revealBtn').classList.add('hide');
+      el('nextBtn').classList.remove('hide');
+      el('assignInstructions').innerHTML = `
+        <strong>Ruolo mostrato:</strong> chiedi al giocatore di memorizzarlo e di non mostrarlo agli altri. Poi premi “Ho visto il ruolo” per passare al successivo.
+      `;
+    }
+
+    function nextPlayer() {
+      state.currentIndex += 1;
+      renderAssign();
+    }
+
+    function startGame() {
+      state.players = clamp(parseInt(el('playersInput').value, 10) || 10, 5, 32);
+      state.mode = modeValue();
+      if (state.mode === 'preset') {
+        state.presetConfig = computePreset(state.players);
+        state.deck = buildAssignmentDeck();
+      } else {
+        const total = totalCustomCount();
+        if (total !== state.players) {
+          el('setupMessage').innerHTML = `<span class="warning">La modalità personalizzata non può partire: il totale dei ruoli (${total}) non coincide con i giocatori (${state.players}).</span>`;
+          openPage('home');
+          return;
+        }
+        state.deck = buildAssignmentDeck();
+      }
+      state.currentIndex = 0;
+      openPage('assign');
+      renderAssign();
+    }
+
+    function autoFillPreset() {
+      state.players = clamp(parseInt(el('playersInput').value, 10) || 10, 5, 32);
+      state.presetConfig = computePreset(state.players);
+      state.mode = 'preset';
+      [...byName('mode')].forEach(r => r.checked = r.value === 'preset');
+      applyModeVisibility();
+      updateCustomCountsFromPreset();
+      renderPreset();
+    }
+
+    function updateCustomCountsFromPreset() {
+      const cfg = computePreset(state.players);
+      state.customCounts = { ...CUSTOM_DEFAULTS };
+      Object.entries(cfg).forEach(([k,v]) => {
+        if (state.customCounts[k] !== undefined) state.customCounts[k] = v;
+      });
+      renderCustomControls();
+    }
+
+    function renderRules() {
+      const acc = el('rulesAccordion');
+      acc.innerHTML = '';
+      RULE_SECTIONS.forEach((section, idx) => {
+        const item = document.createElement('div');
+        item.className = 'acc-item';
+        item.innerHTML = `
+          <button class="acc-btn" aria-expanded="false">
+            <span>${idx + 1}. ${section.title}</span>
+            <span class="badge">apri</span>
+          </button>
+          <div class="acc-content">${section.body}</div>
+        `;
+        const btn = item.querySelector('.acc-btn');
+        btn.addEventListener('click', () => {
+          const open = item.classList.toggle('open');
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          item.querySelector('.badge').textContent = open ? 'chiudi' : 'apri';
+        });
+        acc.appendChild(item);
+      });
+    }
+
+    function renderRoles() {
+      const grid = el('rolesGrid');
+      grid.innerHTML = '';
+      ROLE_DEFS.forEach(role => {
+        const card = document.createElement('div');
+        card.className = 'role-card';
+        card.innerHTML = `
+          <div class="role-head">
+            <h4>${role.icon} ${role.name}</h4>
+            <span>${role.type}</span>
+          </div>
+          <p><strong>Funzione:</strong> ${role.short}</p>
+          <p>${role.desc}</p>
+          <div class="chip-row">
+            <span class="chip ${role.category}">${role.category === 'good' ? 'Buono' : role.category === 'bad' ? 'Cattivo' : 'Speciale'}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderAll() {
+      renderRules();
+      renderRoles();
+      renderPreset();
+      renderCustomControls();
+      applyModeVisibility();
+      renderAssign();
+    }
+
+    // EVENTS
+    el('menuBtn').addEventListener('click', openSidebar);
+    el('closeSidebarBtn').addEventListener('click', closeSidebar);
+    el('overlay').addEventListener('click', closeSidebar);
+    document.querySelectorAll('[data-page-link]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPage(link.getAttribute('data-page-link'));
+      });
+    });
+
+    el('playersInput').addEventListener('input', () => {
+      state.players = clamp(parseInt(el('playersInput').value, 10) || 5, 5, 32);
+      if (state.mode === 'preset') renderPreset();
+      else updateCustomStats();
+    });
+
+    byName('mode').forEach(r => r.addEventListener('change', applyModeVisibility));
+    el('startGameBtn').addEventListener('click', startGame);
+    el('autoFillBtn').addEventListener('click', autoFillPreset);
+    el('revealBtn').addEventListener('click', revealCurrentRole);
+    el('nextBtn').addEventListener('click', nextPlayer);
+    el('finishBtn').addEventListener('click', () => openPage('home'));
+
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '') || 'home';
+      if (['home','rules','roles','assign'].includes(hash)) openPage(hash);
+    });
+
+    // INIT
+    renderAll();
+    const initialHash = window.location.hash.replace('#', '') || 'home';
+    openPage(['home','rules','roles','assign'].includes(initialHash) ? initialHash : 'home');
+    closeSidebar();
+  </script>
 </body>
 </html>
